@@ -1,0 +1,3 @@
+mode: set
+lecoupeur/main.go:3.19,5.2 0 0
+lecoupeur/main.go:7.21,9.2 1 1
