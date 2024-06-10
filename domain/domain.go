@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"lecoupeur/database"
 	"math/rand"
 	"net/url"
 )
@@ -11,6 +12,7 @@ func ShortenURL(url string) string {
 	if CheckURL(url) {
 		id := GenerateUniqueID()
 		// Store the URL and the ID in the database
+		database.StoreURL(url, id)
 		return baseUrl + id
 	}
 	return ""

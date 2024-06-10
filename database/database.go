@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"os"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -12,9 +13,22 @@ var client *redis.Client
 var ctx = context.Background()
 
 func Connect() {
-	// Connect to the database
+	redisHost := ""
+	if os.Getenv("REDIS_HOST") == "" {
+		redisHost = "localhost"
+	} else {
+		redisHost = os.Getenv("REDIS_HOST")
+	}
+
+	redisPort := ""
+	if os.Getenv("REDIS_PORT") == "" {
+		redisPort = "6379"
+	} else {
+		redisPort = os.Getenv("REDIS_PORT")
+	}
+
 	client = redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
+		Addr:     redisHost + ":" + redisPort,
 		Password: "",
 		DB:       0,
 	})
