@@ -5,20 +5,12 @@ import (
 	"net/url"
 )
 
-// Le but de ce package est de gérer la logique métier de l'application.
-// Il s'agit d'un URL Shortener, donc la logique métier est de raccourcir les URL.
-// Pour ce faire, nous avons besoin de stocker les URL dans une base de données.
-// Nous avons besoin de générer des URL raccourcies.
-// Nous avons besoin de rediriger les utilisateurs vers les URL originales.
-// Nous avons besoin de gérer les erreurs.
-// Nous avons besoin de gérer les statistiques.
-
 const baseUrl = "http://localhost:8080/"
 
 func ShortenURL(url string) string {
 	if CheckURL(url) {
 		id := GenerateUniqueID()
-		// store the URL and the ID in the database
+		// Store the URL and the ID in the database
 		return baseUrl + id
 	}
 	return ""
