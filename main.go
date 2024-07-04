@@ -5,5 +5,5 @@ import "lecoupeur/database"
 
 func main() {
 	database.Connect()
-	router.Router()
+	router.StartServer()
 }

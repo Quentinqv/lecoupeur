@@ -19,12 +19,17 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
-func Router() {
-	http.HandleFunc("/shorten", shortenHandler)
-	http.HandleFunc("/r/", redirectHandler)
-	http.Handle("/", http.FileServer(http.Dir("static")))
+func Router() *http.ServeMux {
+	router := http.NewServeMux()
+	router.HandleFunc("/shorten", shortenHandler)
+	router.HandleFunc("/r/", redirectHandler)
+	router.Handle("/", http.FileServer(http.Dir("static")))
+	return router
+}
 
-	err := http.ListenAndServe(":8080", nil)
+func StartServer() {
+	router := Router()
+	err := http.ListenAndServe(":8080", router)
 	if err != nil {
 		panic(err)
 	}
@@ -32,37 +37,26 @@ func Router() {
 
 func shortenHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		_ = json.NewEncoder(w).Encode(ErrorResponse{Error: "Invalid request method"})
 	}
 
 	var req URLRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
+	if err != nil || req.URL == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		err := json.NewEncoder(w).Encode(ErrorResponse{Error: "Invalid request payload"})
-		if err != nil {
-			return
-		}
-		return
+		_ = json.NewEncoder(w).Encode(ErrorResponse{Error: "Invalid request payload"})
 	}
 
 	var shortenUrl = domain.ShortenURL(req.URL)
 	if shortenUrl == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		err := json.NewEncoder(w).Encode(ErrorResponse{Error: "Invalid URL"})
-		if err != nil {
-			return
-		}
-		return
+		_ = json.NewEncoder(w).Encode(ErrorResponse{Error: "Invalid URL"})
 	}
 
 	response := URLResponse{ShortURL: shortenUrl}
 	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(response)
-	if err != nil {
-		return
-	}
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 func redirectHandler(w http.ResponseWriter, r *http.Request) {

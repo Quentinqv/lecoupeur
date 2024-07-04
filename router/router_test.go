@@ -18,7 +18,8 @@ func TestShortenHandler(t *testing.T) {
 	setup()
 
 	type args struct {
-		url string
+		url    string
+		method string
 	}
 	tests := []struct {
 		name           string
@@ -29,7 +30,8 @@ func TestShortenHandler(t *testing.T) {
 		{
 			name: "Shorten valid URL",
 			args: args{
-				url: "https://example.com",
+				url:    "https://example.com",
+				method: "POST",
 			},
 			wantStatusCode: http.StatusOK,
 			wantShortURL:   true,
@@ -37,7 +39,26 @@ func TestShortenHandler(t *testing.T) {
 		{
 			name: "Shorten invalid URL",
 			args: args{
-				url: "example.com",
+				url:    "example.com",
+				method: "POST",
+			},
+			wantStatusCode: http.StatusBadRequest,
+			wantShortURL:   false,
+		},
+		{
+			name: "Invalid request method",
+			args: args{
+				url:    "https://example.com",
+				method: "GET",
+			},
+			wantStatusCode: http.StatusMethodNotAllowed,
+			wantShortURL:   false,
+		},
+		{
+			name: "Invalid request payload",
+			args: args{
+				url:    "",
+				method: "POST",
 			},
 			wantStatusCode: http.StatusBadRequest,
 			wantShortURL:   false,
@@ -48,15 +69,15 @@ func TestShortenHandler(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			payload := URLRequest{URL: tt.args.url}
 			body, _ := json.Marshal(payload)
-			req, err := http.NewRequest("POST", "/shorten", bytes.NewBuffer(body))
+			req, err := http.NewRequest(tt.args.method, "/shorten", bytes.NewBuffer(body))
 			if err != nil {
 				t.Fatal(err)
 			}
 			req.Header.Set("Content-Type", "application/json")
 
 			rr := httptest.NewRecorder()
-			handler := http.HandlerFunc(shortenHandler)
-			handler.ServeHTTP(rr, req)
+			router := Router()
+			router.ServeHTTP(rr, req)
 
 			if status := rr.Code; status != tt.wantStatusCode {
 				t.Errorf("handler returned wrong status code: got %v want %v", status, tt.wantStatusCode)
@@ -116,8 +137,8 @@ func TestRedirectHandler(t *testing.T) {
 			}
 
 			rr := httptest.NewRecorder()
-			handler := http.HandlerFunc(redirectHandler)
-			handler.ServeHTTP(rr, req)
+			router := Router()
+			router.ServeHTTP(rr, req)
 
 			if status := rr.Code; status != tt.wantStatusCode {
 				t.Errorf("handler returned wrong status code: got %v want %v", status, tt.wantStatusCode)

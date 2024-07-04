@@ -59,9 +59,7 @@
 				
 				<option value="file1">lecoupeur/domain/domain.go (93.3%)</option>
 				
-				<option value="file2">lecoupeur/main.go (0.0%)</option>
-				
-				<option value="file3">lecoupeur/router/router.go (62.1%)</option>
+				<option value="file2">lecoupeur/router/router.go (86.7%)</option>
 				
 				</select>
 			</div>
@@ -174,18 +172,7 @@ func CheckURL(urlInput string) bool <span class="cov8" title="1">{
 }
 </pre>
 		
-		<pre class="file" id="file2" style="display: none">package main
-
-import "lecoupeur/router"
-import "lecoupeur/database"
-
-func main() <span class="cov0" title="0">{
-        database.Connect()
-        router.Router()
-}</span>
-</pre>
-		
-		<pre class="file" id="file3" style="display: none">package router
+		<pre class="file" id="file2" style="display: none">package router
 
 import (
         "encoding/json"
@@ -206,41 +193,44 @@ type ErrorResponse struct {
         Error string `json:"error"`
 }
 
-func Router() <span class="cov0" title="0">{
-        http.HandleFunc("/shorten", shortenHandler)
-        http.HandleFunc("/r/", redirectHandler)
-        http.Handle("/", http.FileServer(http.Dir("static")))
+func Router() *http.ServeMux <span class="cov8" title="1">{
+        router := http.NewServeMux()
+        router.HandleFunc("/shorten", shortenHandler)
+        router.HandleFunc("/r/", redirectHandler)
+        router.Handle("/", http.FileServer(http.Dir("static")))
+        return router
+}</span>
 
-        err := http.ListenAndServe(":8080", nil)
+func StartServer() <span class="cov0" title="0">{
+        router := Router()
+        err := http.ListenAndServe(":8080", router)
         if err != nil </span><span class="cov0" title="0">{
                 panic(err)</span>
         }
 }
 
 func shortenHandler(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
-        if r.Method != http.MethodPost </span><span class="cov0" title="0">{
-                http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-                return
+        if r.Method != http.MethodPost </span><span class="cov8" title="1">{
+                w.WriteHeader(http.StatusMethodNotAllowed)
+                _ = json.NewEncoder(w).Encode(ErrorResponse{Error: "Invalid request method"})
         }</span>
 
         <span class="cov8" title="1">var req URLRequest
         err := json.NewDecoder(r.Body).Decode(&amp;req)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil || req.URL == "" </span><span class="cov8" title="1">{
                 w.WriteHeader(http.StatusBadRequest)
-                json.NewEncoder(w).Encode(ErrorResponse{Error: "Invalid request payload"})
-                return
+                _ = json.NewEncoder(w).Encode(ErrorResponse{Error: "Invalid request payload"})
         }</span>
 
         <span class="cov8" title="1">var shortenUrl = domain.ShortenURL(req.URL)
         if shortenUrl == "" </span><span class="cov8" title="1">{
                 w.WriteHeader(http.StatusBadRequest)
-                json.NewEncoder(w).Encode(ErrorResponse{Error: "Invalid URL"})
-                return
+                _ = json.NewEncoder(w).Encode(ErrorResponse{Error: "Invalid URL"})
         }</span>
 
         <span class="cov8" title="1">response := URLResponse{ShortURL: shortenUrl}
         w.Header().Set("Content-Type", "application/json")
-        json.NewEncoder(w).Encode(response)</span>
+        _ = json.NewEncoder(w).Encode(response)</span>
 }
 
 func redirectHandler(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
