@@ -7,11 +7,13 @@ import (
 	"lecoupeur/domain"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
 func setup() {
 	database.Connect()
+	database.FlushAll()
 }
 
 func TestShortenHandler(t *testing.T) {
@@ -146,6 +148,52 @@ func TestRedirectHandler(t *testing.T) {
 
 			if location := rr.Header().Get("Location"); location != tt.wantLocation {
 				t.Errorf("handler returned wrong location header: got %v want %v", location, tt.wantLocation)
+			}
+		})
+	}
+}
+
+func Test_statsHandler(t *testing.T) {
+	setup()
+	database.StoreURL("https://example.com", "123456")
+	database.StoreURL("https://example.fr", "abced")
+
+	tests := []struct {
+		name       string
+		want       string
+		method     string
+		statusCode int
+	}{
+		{
+			name:       "Get all URLs",
+			want:       `{"123456":{"url":"https://example.com","counter":0},"abced":{"url":"https://example.fr","counter":0}}`,
+			method:     "GET",
+			statusCode: http.StatusOK,
+		},
+		{
+			name:       "Bad request method",
+			want:       `{"error":"Invalid request method"}`,
+			method:     "POST",
+			statusCode: http.StatusMethodNotAllowed,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req, err := http.NewRequest(tt.method, "/stats", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			rr := httptest.NewRecorder()
+			router := Router()
+			router.ServeHTTP(rr, req)
+
+			if status := rr.Code; status != tt.statusCode {
+				t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
+			}
+
+			if strings.Replace(rr.Body.String(), "\n", "", -1) != tt.want {
+				t.Errorf("handler returned wrong body: got %v want %v", rr.Body.String(), tt.want)
 			}
 		})
 	}

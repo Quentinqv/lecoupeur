@@ -24,6 +24,7 @@ func Router() *http.ServeMux {
 	router.HandleFunc("/shorten", shortenHandler)
 	router.HandleFunc("/r/", redirectHandler)
 	router.Handle("/", http.FileServer(http.Dir("static")))
+	router.HandleFunc("/stats", statsHandler)
 	return router
 }
 
@@ -69,4 +70,25 @@ func redirectHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, url, http.StatusFound)
+}
+
+func statsHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		_ = json.NewEncoder(w).Encode(ErrorResponse{Error: "Invalid request method"})
+		return
+	}
+
+	urls, err := database.GetAllURLs()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(ErrorResponse{Error: "Failed to retrieve stats"})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(urls)
+	if err != nil {
+		return
+	}
 }

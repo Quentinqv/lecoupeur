@@ -74,6 +74,19 @@
         .short-url button:hover {
             background-color: #0056b3;
         }
+        #statsTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        #statsTable th, #statsTable td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+        #statsTable th {
+            background-color: #f4f4f4;
+        }
     </style>
 </head>
 <body>
@@ -84,6 +97,19 @@
         <button type="submit">Shorten URL</button>
     </form>
     <div id="result"></div>
+    <div id="stats">
+        <h2>Statistics</h2>
+        <table id="statsTable">
+            <thead>
+            <tr>
+                <th>Short URL</th>
+                <th>Original URL</th>
+                <th>Counter</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
 </div>
 
 <script>
@@ -105,9 +131,12 @@
                     <button onclick="copyToClipboard()">Copy</button>
                 </div>
             `;
+            loadStats();
         } else {
             document.getElementById('result').innerText = 'Error: ' + result.error;
         }
+
+        document.getElementById('url').value = '';
     });
 
     async function copyToClipboard() {
@@ -119,6 +148,31 @@
             alert('Failed to copy the URL: ' + err);
         }
     }
+
+    async function loadStats() {
+        const response = await fetch('/stats', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        const stats = await response.json();
+        const tbody = document.getElementById('statsTable').querySelector('tbody');
+        tbody.innerHTML = ''; // Clear existing rows
+
+        for (const [id, data] of Object.entries(stats)) {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><a href="/r/${id}" target="_blank">${id}</a></td>
+                <td>${data.url}</td>
+                <td>${data.counter}</td>
+            `;
+            tbody.appendChild(row);
+        }
+    }
+
+    // Load stats on page load
+    window.onload = loadStats;
 </script>
 </body>
 </html>

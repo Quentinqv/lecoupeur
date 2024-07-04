@@ -28,6 +28,13 @@ func TestCheckURL(t *testing.T) {
 			},
 			want: false,
 		},
+		{
+			name: "CheckURL with invalid URL",
+			args: args{
+				urlInput: "",
+			},
+			want: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -74,6 +81,13 @@ func TestShortenURL(t *testing.T) {
 				url: "https://example.com",
 			},
 			want: "http://localhost:8080/r/abcdef",
+		},
+		{
+			name: "ShortenURL with invalid URL",
+			args: args{
+				url: "example.com",
+			},
+			want: "",
 		},
 	}
 	for _, tt := range tests {
