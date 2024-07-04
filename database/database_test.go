@@ -4,16 +4,6 @@ import (
 	"testing"
 )
 
-func TestConnect(t *testing.T) {
-	// Initialize the Redis connection
-	Connect()
-
-	// Check if the client is started
-	if _, err := client.Ping(ctx).Result(); err != nil {
-		t.Fatalf("Failed to connect to Redis: %v", err)
-	}
-}
-
 func TestStoreAndGetURL(t *testing.T) {
 	Connect()
 

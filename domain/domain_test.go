@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"lecoupeur/database"
 	"testing"
 )
 
@@ -57,6 +58,8 @@ func TestGenerateUniqueID(t *testing.T) {
 }
 
 func TestShortenURL(t *testing.T) {
+	database.Connect()
+
 	type args struct {
 		url string
 	}
@@ -70,7 +73,7 @@ func TestShortenURL(t *testing.T) {
 			args: args{
 				url: "https://example.com",
 			},
-			want: "http://localhost:8080/abcdef",
+			want: "http://localhost:8080/r/abcdef",
 		},
 	}
 	for _, tt := range tests {

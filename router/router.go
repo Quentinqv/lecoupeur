@@ -21,7 +21,8 @@ type ErrorResponse struct {
 
 func Router() {
 	http.HandleFunc("/shorten", shortenHandler)
-	http.HandleFunc("/", redirectHandler)
+	http.HandleFunc("/r/", redirectHandler)
+	http.Handle("/", http.FileServer(http.Dir("static")))
 
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
@@ -39,24 +40,34 @@ func shortenHandler(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(ErrorResponse{Error: "Invalid request payload"})
+		err := json.NewEncoder(w).Encode(ErrorResponse{Error: "Invalid request payload"})
+		if err != nil {
+			return
+		}
 		return
 	}
 
 	var shortenUrl = domain.ShortenURL(req.URL)
 	if shortenUrl == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(ErrorResponse{Error: "Invalid URL"})
+		err := json.NewEncoder(w).Encode(ErrorResponse{Error: "Invalid URL"})
+		if err != nil {
+			return
+		}
 		return
 	}
 
 	response := URLResponse{ShortURL: shortenUrl}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		return
+	}
 }
 
 func redirectHandler(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Path[1:]
+	// Get the ID from the URL path, so removing the first 3 characters (/r/)
+	id := r.URL.Path[3:]
 	url, err := database.GetURL(id)
 	if err != nil {
 		http.NotFound(w, r)

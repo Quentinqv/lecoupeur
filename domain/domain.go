@@ -6,7 +6,7 @@ import (
 	"net/url"
 )
 
-const baseUrl = "http://localhost:8080/"
+const baseUrl = "http://localhost:8080/r/"
 
 func ShortenURL(url string) string {
 	if CheckURL(url) {
