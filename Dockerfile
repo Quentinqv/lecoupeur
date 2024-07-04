@@ -19,6 +19,7 @@ WORKDIR /app
 
 # Copier le binaire construit depuis la phase de build
 COPY --from=builder /app/lecoupeur /app/lecoupeur
+COPY static /app/static
 
 # Exposer le port sur lequel l'application écoute
 EXPOSE 8080
